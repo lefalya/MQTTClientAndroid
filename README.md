@@ -1,5 +1,5 @@
 # MQTTClientAndroid
-Dummy project for laboratory learning module. (Advanced Computer System Laboratory, Gunadarma University)
+Dummy project for Mobile Computing System learning module, Part 8. (Advanced Computer System Laboratory, Gunadarma University)
 
 Projects details : 
 https://www.hivemq.com/blog/mqtt-client-library-enyclopedia-paho-android-service/
