@@ -26,7 +26,8 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 public class MainActivity extends AppCompatActivity {
     public String command = "a";
     public MqttAndroidClient client;
-
+    public TextView textVoltage;
+    public String val;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,23 +37,15 @@ public class MainActivity extends AppCompatActivity {
 
         final MemoryPersistence memPer = new MemoryPersistence();
         final String clientId = MqttClient.generateClientId();
+
         client = new MqttAndroidClient(
                 this.getApplicationContext(),
                 "tcp://192.168.121.104:1883",
                 clientId,
                 memPer);
 
-
         Button ledSwitch = (Button) findViewById(R.id.ledSwitch);
-
-        ledSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendCommand(client, clientId, memPer);
-            }
-        });
-
-
+        textVoltage = (TextView) findViewById(R.id.textView2);
 
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setAutomaticReconnect(true);
@@ -69,34 +62,7 @@ public class MainActivity extends AppCompatActivity {
                     disconnectedBufferOptions.setPersistBuffer(false);
                     disconnectedBufferOptions.setDeleteOldestMessages(false);
                     client.setBufferOpts(disconnectedBufferOptions);
-                    try {
-                        client.subscribe("test", 0, null, new IMqttActionListener() {
-                            @Override
-                            public void onSuccess(IMqttToken asyncActionToken) {
-                                Log.d("dari app","Subscribed!");
-                            }
-
-                            @Override
-                            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                                Log.d("dari app","Failed to subscribe");
-                            }
-                        });
-
-                        // THIS DOES NOT WORK!
-                        client.subscribe("test", 0, new IMqttMessageListener() {
-                            @Override
-                            public void messageArrived(String topic, MqttMessage message) throws Exception {
-                                // message Arrived!
-                                String val = new String(message.getPayload());
-                                Log.d("dri app","Message: " + topic + " : " + val);
-                                setTextView(val);
-                            }
-                        });
-
-                    } catch (MqttException ex){
-                        System.err.println("Exception whilst subscribing");
-                        ex.printStackTrace();
-                    }
+                    subscribeToTopic();
                 }
 
                 @Override
@@ -105,22 +71,55 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-
         } catch (MqttException ex){
             ex.printStackTrace();
         }
 
+        ledSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendCommand(client, clientId, memPer);
+            }
+        });
+
     }
 
-    public void setTextView(String voltage){
-        TextView textVoltage = (TextView) findViewById(R.id.textView2);
+    public void subscribeToTopic(){
         try {
-            textVoltage .setText(voltage);
-        }
-        catch(Exception e){
-            e.printStackTrace();
+            client.subscribe("test", 0, null, new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    Log.d("dari app","Subscribed!");
+                }
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    Log.d("dari app","Failed to subscribe");
+                }
+            });
+
+            
+            client.subscribe("test", 0, new IMqttMessageListener() {
+                @Override
+                public void messageArrived(String topic, MqttMessage message) throws Exception {
+                    // message Arrived!
+                    val = new String(message.getPayload());
+                    Log.d("dri app","Message: " + topic + " : " + val);
+                    runOnUiThread(new Runnable(){
+                        public void run() {
+                            textVoltage.setText(val);
+                        }
+                    });
+                }
+            });
+
+        } catch (MqttException ex){
+            System.err.println("Exception whilst subscribing");
+            ex.printStackTrace();
         }
     }
+
+
 
     private void sendCommand (final MqttAndroidClient client, String clientId, MemoryPersistence memPer){
         Log.i("MSSG", "SMG");
