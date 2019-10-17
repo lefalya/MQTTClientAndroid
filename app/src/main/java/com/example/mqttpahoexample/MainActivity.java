@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-            
+
             client.subscribe("test", 0, new IMqttMessageListener() {
                 @Override
                 public void messageArrived(String topic, MqttMessage message) throws Exception {
